@@ -10,9 +10,10 @@ def main():
     load_dotenv() 
 
     api_key = os.getenv('API_KEY')
+    base_path = os.getenv('FILE_PATH')
 
     if not api_key:
-        print("API_KEY not found. Please set it in your environment variables.")
+        print("api_key not found")
         return
     
     initial_date = datetime.today()
@@ -26,11 +27,18 @@ def main():
         response.raise_for_status()
         
         df = pd.read_csv(StringIO(response.text))
-        file_path = f'{initial_date.strftime("%Y-%m-%d")}_a_{final_date.strftime("%Y-%m-%d")}.csv'
-        df.to_csv(file_path, index=False)
+
+        folder_name = initial_date.strftime('%Y-%m-%d')
+        file_path = os.path.join(base_path, folder_name)
+
+        os.makedirs(file_path, exist_ok=True)
+
+        df.to_csv(os.path.join(file_path, 'dados_brutos.csv'), index=False)
+        df[['datetime', 'tempmin', 'tempmax', 'temp']].to_csv(os.path.join(file_path, 'temperaturas.csv'), index=False)
+        df[['datetime', 'description', 'icon']].to_csv(os.path.join(file_path, 'condicoes.csv'), index=False)
         
     except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
+        print(f"request error: {e}")
 
 if __name__ == "__main__":
     main()
